@@ -1632,5 +1632,27 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": ""
+  },
+  {
+    "key": "STk5Xj8hdAx3sTzmtJ3QysKkq6X2A3yj73JtxttiRyk",
+    "title": "SIMD-0490: Upgrade BPF Stake Program to v5.0.0",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0490-upgrade-stake-to-v5.md"
+    ],
+    "simds": [
+      "490"
+    ],
+    "owners": [],
+    "min_agave_versions": [
+      "v4.0.0"
+    ],
+    "min_fd_versions": [],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": ""
   }
 ]
