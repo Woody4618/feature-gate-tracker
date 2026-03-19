@@ -9,25 +9,23 @@ Each channel is optional -- skipped if its environment variables are not set.
 
 import json
 import os
-import sys
-from datetime import datetime
 
 import requests
 
 NOTIFICATIONS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'notifications.json')
+EXPLORER_BASE_URL = 'https://explorer.solana.com/address'
 
-# Slack
 SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL')
-
-# Twitter/X
 TWITTER_API_KEY = os.environ.get('TWITTER_API_KEY')
 TWITTER_API_SECRET = os.environ.get('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.environ.get('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_SECRET = os.environ.get('TWITTER_ACCESS_SECRET')
-
-# Telegram
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
+
+
+def _explorer_url(key: str) -> str:
+    return f"{EXPLORER_BASE_URL}/{key}"
 
 
 def load_notifications() -> dict:
@@ -41,26 +39,43 @@ def load_notifications() -> dict:
 def has_anything_to_send(data: dict) -> bool:
     return bool(
         data.get('new_features')
-        or data.get('upcoming_activations')
+        or data.get('pending_mainnet')
         or data.get('newly_activated')
     )
 
 
+def _cluster_status(feat: dict) -> str:
+    """Which clusters this feature is active on."""
+    active = []
+    if feat.get('mainnet_epoch'):
+        active.append('Mainnet')
+    if feat.get('testnet_epoch'):
+        active.append('Testnet')
+    if feat.get('devnet_epoch'):
+        active.append('Devnet')
+    return ', '.join(active) if active else 'Pending'
+
+
+def _epoch_comparison(label: str, activation_epoch, current_epoch) -> str:
+    """Format 'Label: 907 (current: 920)' or 'Label: not activated (current: 920)'."""
+    current_str = f"current: {current_epoch}" if current_epoch else "current: ?"
+    if activation_epoch:
+        return f"{label}: {activation_epoch} ({current_str})"
+    else:
+        return f"{label}: not activated ({current_str})"
+
+
 # ---------------------------------------------------------------------------
-# Message formatting
+# Plain text
 # ---------------------------------------------------------------------------
 
-def _feature_line_plain(feat: dict) -> str:
+def _feature_line_plain(feat: dict, data: dict) -> str:
     parts = [f"  {feat['simds']}: {feat['title']}"]
-    if feat.get('estimated_activation_date'):
-        try:
-            dt = datetime.fromisoformat(feat['estimated_activation_date'])
-            parts.append(f"  Est. activation: ~{dt.strftime('%B %d, %Y')}")
-        except ValueError:
-            pass
-    if feat.get('mainnet_epoch'):
-        parts.append(f"  Mainnet epoch: {feat['mainnet_epoch']}")
-    parts.append(f"  Key: {feat['short_key']}")
+    parts.append(f"  {_epoch_comparison('Mainnet', feat.get('mainnet_epoch'), data.get('current_mainnet_epoch'))}")
+    parts.append(f"  {_epoch_comparison('Testnet', feat.get('testnet_epoch'), data.get('current_testnet_epoch'))}")
+    parts.append(f"  {_epoch_comparison('Devnet', feat.get('devnet_epoch'), data.get('current_devnet_epoch'))}")
+    parts.append(f"  Key: {feat['key']}")
+    parts.append(f"  Explorer: {_explorer_url(feat['key'])}")
     return '\n'.join(parts)
 
 
@@ -70,26 +85,28 @@ def build_plain_message(data: dict) -> str:
     if data.get('new_features'):
         lines = ["NEW SOLANA FEATURE GATES DETECTED"]
         for feat in data['new_features']:
+            status = _cluster_status(feat)
             lines.append("")
-            lines.append(_feature_line_plain(feat))
+            lines.append(f"  {feat['simds']}: {feat['title']}  [Active on: {status}]")
+            lines.append(f"  {_epoch_comparison('Mainnet', feat.get('mainnet_epoch'), data.get('current_mainnet_epoch'))}")
+            lines.append(f"  {_epoch_comparison('Testnet', feat.get('testnet_epoch'), data.get('current_testnet_epoch'))}")
+            lines.append(f"  {_epoch_comparison('Devnet', feat.get('devnet_epoch'), data.get('current_devnet_epoch'))}")
+            lines.append(f"  Key: {feat['key']}")
+            lines.append(f"  Explorer: {_explorer_url(feat['key'])}")
         sections.append('\n'.join(lines))
 
-    if data.get('upcoming_activations'):
-        lines = ["UPCOMING MAINNET ACTIVATIONS (next 7 days)"]
-        for feat in data['upcoming_activations']:
+    if data.get('pending_mainnet'):
+        lines = ["PENDING MAINNET ACTIVATION"]
+        for feat in data['pending_mainnet']:
             lines.append("")
-            lines.append(_feature_line_plain(feat))
-            if feat.get('testnet_epoch'):
-                lines.append(f"  Testnet epoch: {feat['testnet_epoch']}")
-            if feat.get('devnet_epoch'):
-                lines.append(f"  Devnet epoch: {feat['devnet_epoch']}")
+            lines.append(_feature_line_plain(feat, data))
         sections.append('\n'.join(lines))
 
     if data.get('newly_activated'):
         lines = ["NEWLY ACTIVATED ON MAINNET"]
         for feat in data['newly_activated']:
             lines.append("")
-            lines.append(_feature_line_plain(feat))
+            lines.append(_feature_line_plain(feat, data))
         sections.append('\n'.join(lines))
 
     return '\n\n'.join(sections)
@@ -99,25 +116,18 @@ def build_plain_message(data: dict) -> str:
 # Slack
 # ---------------------------------------------------------------------------
 
-def _slack_feature_block(feat: dict, include_estimate: bool = False) -> dict:
+def _slack_feature_block(feat: dict, data: dict, show_status: bool = False) -> dict:
     text_parts = [f"*{feat['simds']}*: {feat['title']}"]
+    if show_status:
+        text_parts[0] += f"  _{_cluster_status(feat)}_"
     if feat.get('simd_links'):
         text_parts.append(f"<{feat['simd_links'][0]}|View SIMD>")
-    text_parts.append(f"`{feat['key']}`")
+    text_parts.append(f"<{_explorer_url(feat['key'])}|View on Explorer> | `{feat['key']}`")
 
-    if include_estimate and feat.get('estimated_activation_date'):
-        try:
-            dt = datetime.fromisoformat(feat['estimated_activation_date'])
-            text_parts.append(f"Est. activation: *~{dt.strftime('%B %d, %Y')}*")
-        except ValueError:
-            pass
+    text_parts.append(_epoch_comparison('Mainnet', feat.get('mainnet_epoch'), data.get('current_mainnet_epoch')))
+    text_parts.append(_epoch_comparison('Testnet', feat.get('testnet_epoch'), data.get('current_testnet_epoch')))
+    text_parts.append(_epoch_comparison('Devnet', feat.get('devnet_epoch'), data.get('current_devnet_epoch')))
 
-    if feat.get('mainnet_epoch'):
-        text_parts.append(f"Mainnet epoch: *{feat['mainnet_epoch']}*")
-    if feat.get('testnet_epoch'):
-        text_parts.append(f"Testnet epoch: {feat['testnet_epoch']}")
-    if feat.get('devnet_epoch'):
-        text_parts.append(f"Devnet epoch: {feat['devnet_epoch']}")
     if feat.get('agave_versions'):
         text_parts.append(f"Agave: {', '.join(feat['agave_versions'])}")
 
@@ -140,16 +150,16 @@ def send_slack(data: dict):
             "text": {"type": "plain_text", "text": "New Solana Feature Gates Detected"}
         })
         for feat in data['new_features']:
-            blocks.append(_slack_feature_block(feat))
+            blocks.append(_slack_feature_block(feat, data, show_status=True))
         blocks.append({"type": "divider"})
 
-    if data.get('upcoming_activations'):
+    if data.get('pending_mainnet'):
         blocks.append({
             "type": "header",
-            "text": {"type": "plain_text", "text": "Upcoming Mainnet Activations (next 7 days)"}
+            "text": {"type": "plain_text", "text": "Pending Mainnet Activation"}
         })
-        for feat in data['upcoming_activations']:
-            blocks.append(_slack_feature_block(feat, include_estimate=True))
+        for feat in data['pending_mainnet']:
+            blocks.append(_slack_feature_block(feat, data))
         blocks.append({"type": "divider"})
 
     if data.get('newly_activated'):
@@ -158,7 +168,7 @@ def send_slack(data: dict):
             "text": {"type": "plain_text", "text": "Newly Activated on Mainnet"}
         })
         for feat in data['newly_activated']:
-            blocks.append(_slack_feature_block(feat))
+            blocks.append(_slack_feature_block(feat, data))
 
     if not blocks:
         return
@@ -178,39 +188,47 @@ def send_slack(data: dict):
 def _build_tweets(data: dict) -> list[str]:
     """Build a list of tweet texts. Each must be <= 280 chars."""
     tweets = []
+    cm = data.get('current_mainnet_epoch')
+    ct = data.get('current_testnet_epoch')
+    cd = data.get('current_devnet_epoch')
 
     for feat in data.get('new_features', []):
-        simd_link = feat['simd_links'][0] if feat.get('simd_links') else ''
+        status = _cluster_status(feat)
+        explorer = _explorer_url(feat['key'])
         tweet = (
-            f"New Solana feature gate detected\n\n"
+            f"New Solana feature gate [{status}]\n\n"
             f"{feat['simds']}: {feat['title']}\n"
-            f"Key: {feat['short_key']}"
+            f"{explorer}"
         )
-        if simd_link:
-            tweet += f"\n{simd_link}"
         tweets.append(tweet[:280])
 
-    for feat in data.get('upcoming_activations', []):
-        date_str = ''
-        if feat.get('estimated_activation_date'):
-            try:
-                dt = datetime.fromisoformat(feat['estimated_activation_date'])
-                date_str = f" (~{dt.strftime('%b %d, %Y')})"
-            except ValueError:
-                pass
+    for feat in data.get('pending_mainnet', []):
+        explorer = _explorer_url(feat['key'])
+        parts = []
+        if feat.get('testnet_epoch') and ct:
+            parts.append(f"Testnet: {feat['testnet_epoch']} (now: {ct})")
+        if feat.get('devnet_epoch') and cd:
+            parts.append(f"Devnet: {feat['devnet_epoch']} (now: {cd})")
+        epochs = ' | '.join(parts)
+        mainnet_str = f"Mainnet: pending (now: {cm})" if cm else "Mainnet: pending"
         tweet = (
-            f"Heads up: Solana mainnet activation approaching{date_str}\n\n"
+            f"Pending mainnet activation\n\n"
             f"{feat['simds']}: {feat['title']}\n"
-            f"Key: {feat['short_key']}"
+            f"{mainnet_str}\n"
+            f"{explorer}"
         )
         tweets.append(tweet[:280])
 
     for feat in data.get('newly_activated', []):
+        explorer = _explorer_url(feat['key'])
+        epoch_str = f"Activated epoch: {feat.get('mainnet_epoch', '?')}"
+        if cm:
+            epoch_str += f" (now: {cm})"
         tweet = (
             f"Solana feature gate activated on mainnet\n\n"
             f"{feat['simds']}: {feat['title']}\n"
-            f"Epoch: {feat.get('mainnet_epoch', 'N/A')}\n"
-            f"Key: {feat['short_key']}"
+            f"{epoch_str}\n"
+            f"{explorer}"
         )
         tweets.append(tweet[:280])
 
@@ -270,40 +288,50 @@ def _escape_md(text: str) -> str:
     return text
 
 
+def _tg_epoch_line(label: str, activation_epoch, current_epoch) -> str:
+    current_str = f"current: {current_epoch}" if current_epoch else "current: \\?"
+    if activation_epoch:
+        return f"{label}: *{activation_epoch}* \\({current_str}\\)"
+    else:
+        return f"{label}: not activated \\({current_str}\\)"
+
+
 def _build_telegram_message(data: dict) -> str:
     sections = []
+    cm = data.get('current_mainnet_epoch')
+    ct = data.get('current_testnet_epoch')
+    cd = data.get('current_devnet_epoch')
 
     if data.get('new_features'):
         lines = [r"*New Solana Feature Gates Detected*", ""]
         for feat in data['new_features']:
             title = _escape_md(feat['title'])
             simds = _escape_md(feat['simds'])
-            lines.append(f"{simds}: {title}")
-            lines.append(f"Key: `{feat['short_key']}`")
+            status = _escape_md(_cluster_status(feat))
+            explorer = _explorer_url(feat['key'])
+            lines.append(f"{simds}: {title}  \\[{status}\\]")
+            lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm))
+            lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct))
+            lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd))
+            lines.append(f"Key: `{feat['key']}`")
+            lines.append(f"[View on Explorer]({explorer})")
             if feat.get('simd_links'):
-                link = feat['simd_links'][0]
-                lines.append(f"[View SIMD]({link})")
+                lines.append(f"[View SIMD]({feat['simd_links'][0]})")
             lines.append("")
         sections.append('\n'.join(lines))
 
-    if data.get('upcoming_activations'):
-        lines = [r"*Upcoming Mainnet Activations \(next 7 days\)*", ""]
-        for feat in data['upcoming_activations']:
+    if data.get('pending_mainnet'):
+        lines = [r"*Pending Mainnet Activation*", ""]
+        for feat in data['pending_mainnet']:
             title = _escape_md(feat['title'])
             simds = _escape_md(feat['simds'])
+            explorer = _explorer_url(feat['key'])
             lines.append(f"{simds}: {title}")
-            lines.append(f"Key: `{feat['short_key']}`")
-            if feat.get('estimated_activation_date'):
-                try:
-                    dt = datetime.fromisoformat(feat['estimated_activation_date'])
-                    date_str = _escape_md(f"~{dt.strftime('%B %d, %Y')}")
-                    lines.append(f"Est\\. activation: *{date_str}*")
-                except ValueError:
-                    pass
-            if feat.get('testnet_epoch'):
-                lines.append(f"Testnet epoch: {feat['testnet_epoch']}")
-            if feat.get('devnet_epoch'):
-                lines.append(f"Devnet epoch: {feat['devnet_epoch']}")
+            lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm))
+            lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct))
+            lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd))
+            lines.append(f"Key: `{feat['key']}`")
+            lines.append(f"[View on Explorer]({explorer})")
             lines.append("")
         sections.append('\n'.join(lines))
 
@@ -312,10 +340,13 @@ def _build_telegram_message(data: dict) -> str:
         for feat in data['newly_activated']:
             title = _escape_md(feat['title'])
             simds = _escape_md(feat['simds'])
+            explorer = _explorer_url(feat['key'])
             lines.append(f"{simds}: {title}")
-            lines.append(f"Key: `{feat['short_key']}`")
-            if feat.get('mainnet_epoch'):
-                lines.append(f"Mainnet epoch: {feat['mainnet_epoch']}")
+            lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm))
+            lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct))
+            lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd))
+            lines.append(f"Key: `{feat['key']}`")
+            lines.append(f"[View on Explorer]({explorer})")
             lines.append("")
         sections.append('\n'.join(lines))
 
@@ -331,7 +362,6 @@ def send_telegram(data: dict):
     if not message.strip():
         return
 
-    # Telegram messages have a 4096 char limit; truncate if needed
     if len(message) > 4000:
         message = message[:4000] + "\n\n\\.\\.\\. _truncated_"
 
@@ -362,7 +392,7 @@ def main():
 
     print(f"Notifications to send: "
           f"{len(data.get('new_features', []))} new, "
-          f"{len(data.get('upcoming_activations', []))} upcoming, "
+          f"{len(data.get('pending_mainnet', []))} pending mainnet, "
           f"{len(data.get('newly_activated', []))} activated")
 
     plain = build_plain_message(data)

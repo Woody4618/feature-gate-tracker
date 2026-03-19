@@ -1,7 +1,7 @@
 """
 Compare the previous and current feature_gates.json to detect:
 1. Newly added features (keys that didn't exist before)
-2. Features estimated to activate on mainnet within the next 7 days
+2. Features pending mainnet activation (active on devnet + testnet, not yet on mainnet)
 3. Features that were just activated on mainnet (got mainnet_activation_epoch since last run)
 
 Outputs data/notifications.json with structured messages for notify.py.
@@ -13,20 +13,18 @@ modifications were made in the current run.
 import asyncio
 import json
 import os
+import re
 import subprocess
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 from solana.rpc.async_api import AsyncClient
 
 FEATURE_GATES_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'feature_gates.json')
 NOTIFICATIONS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'notifications.json')
 MAINNET_RPC_URL = os.environ.get('MAINNET_RPC_URL', 'https://api.mainnet-beta.solana.com')
-
-SLOTS_PER_EPOCH = 432_000
-SLOT_DURATION_MS = 400
-EPOCH_DURATION_SECONDS = SLOTS_PER_EPOCH * SLOT_DURATION_MS / 1000
-WARNING_DAYS = 7
+TESTNET_RPC_URL = os.environ.get('TESTNET_RPC_URL', 'https://api.testnet.solana.com')
+DEVNET_RPC_URL = os.environ.get('DEVNET_RPC_URL', 'https://api.devnet.solana.com')
 
 
 def load_previous_features() -> list[dict]:
@@ -67,10 +65,37 @@ def find_newly_activated(previous: list[dict], current: list[dict]) -> list[dict
     return result
 
 
-async def estimate_activation_dates(features: list[dict]) -> list[dict]:
+async def get_current_epoch(rpc_url: str, cluster_name: str) -> int | None:
+    try:
+        async with AsyncClient(rpc_url) as connection:
+            epoch_info_resp = await connection.get_epoch_info()
+            epoch = epoch_info_resp.value.epoch
+            print(f"Current {cluster_name} epoch: {epoch}")
+            return epoch
+    except Exception as e:
+        print(f"Failed to get current epoch from {cluster_name}: {e}")
+        return None
+
+
+async def get_all_current_epochs() -> dict:
+    mainnet, testnet, devnet = await asyncio.gather(
+        get_current_epoch(MAINNET_RPC_URL, "mainnet"),
+        get_current_epoch(TESTNET_RPC_URL, "testnet"),
+        get_current_epoch(DEVNET_RPC_URL, "devnet"),
+    )
+    return {
+        'current_mainnet_epoch': mainnet,
+        'current_testnet_epoch': testnet,
+        'current_devnet_epoch': devnet,
+    }
+
+
+def find_pending_mainnet(features: list[dict]) -> list[dict]:
     """
-    For features that are on devnet+testnet but not yet on mainnet,
-    estimate when they might activate based on current epoch progression.
+    Features that are active on devnet + testnet but not yet on mainnet.
+    These are in the pipeline for mainnet activation -- no estimated date
+    since we don't know when the activation will be triggered.
+    Sorted by testnet activation epoch (earliest first = likely activated sooner).
     """
     candidates = [
         f for f in features
@@ -78,71 +103,22 @@ async def estimate_activation_dates(features: list[dict]) -> list[dict]:
         and f.get('testnet_activation_epoch')
         and not f.get('mainnet_activation_epoch')
     ]
-
-    if not candidates:
-        return []
-
-    try:
-        async with AsyncClient(MAINNET_RPC_URL) as connection:
-            epoch_info_resp = await connection.get_epoch_info()
-            epoch_info = epoch_info_resp.value
-    except Exception as e:
-        print(f"Failed to get epoch info from mainnet: {e}")
-        return []
-
-    current_epoch = epoch_info.epoch
-    slot_index = epoch_info.slot_index
-    slots_in_epoch = epoch_info.slots_in_epoch
-
-    slots_remaining_in_epoch = slots_in_epoch - slot_index
-    seconds_remaining = slots_remaining_in_epoch * SLOT_DURATION_MS / 1000
-    epoch_end_time = datetime.now(timezone.utc) + timedelta(seconds=seconds_remaining)
-
-    now = datetime.now(timezone.utc)
-    warning_threshold = now + timedelta(days=WARNING_DAYS)
-
-    upcoming = []
-    for feat in candidates:
-        # We don't know the exact mainnet target epoch, but features typically
-        # follow testnet -> devnet -> mainnet order. The wiki "Pending Mainnet"
-        # table indicates they're expected next. We estimate based on the
-        # assumption they'll activate in one of the upcoming epochs.
-        #
-        # Heuristic: use the devnet epoch lag as a rough guide, but since we
-        # don't have a specific target, we check if the feature has been on
-        # both testnets and flag it as "upcoming" with an estimated date based
-        # on next few epochs.
-
-        # For features in "Pending Mainnet" status, the estimated activation
-        # is typically within the next few epochs. We calculate the earliest
-        # possible epoch (current + 1) and latest reasonable (current + 5).
-        estimated_epoch = current_epoch + 1
-        epochs_away = estimated_epoch - current_epoch
-        estimated_seconds = seconds_remaining + (epochs_away - 1) * EPOCH_DURATION_SECONDS
-        estimated_date = now + timedelta(seconds=estimated_seconds)
-
-        if estimated_date <= warning_threshold:
-            feat_with_date = dict(feat)
-            feat_with_date['estimated_activation_date'] = estimated_date.isoformat()
-            feat_with_date['estimated_epoch'] = estimated_epoch
-            feat_with_date['epochs_away'] = epochs_away
-            upcoming.append(feat_with_date)
-
-    return upcoming
+    candidates.sort(key=lambda f: f.get('testnet_activation_epoch', 0))
+    return candidates
 
 
 def format_feature_summary(feat: dict) -> dict:
     """Extract the key fields for notification messages."""
     key = feat.get('key', 'unknown')
-    short_key = key[:8] + '...' if len(key) > 8 else key
     simds = feat.get('simds', [])
     simd_str = ', '.join(f'SIMD-{s.zfill(4)}' for s in simds) if simds else 'N/A'
     simd_links = feat.get('simd_link', [])
     title = feat.get('title') or feat.get('description') or 'Untitled'
 
+    title = re.sub(r'^SIMD-\d+:\s*', '', title)
+
     return {
         'key': key,
-        'short_key': short_key,
         'title': title,
         'simds': simd_str,
         'simd_links': [l for l in simd_links if l],
@@ -151,9 +127,6 @@ def format_feature_summary(feat: dict) -> dict:
         'testnet_epoch': feat.get('testnet_activation_epoch'),
         'devnet_epoch': feat.get('devnet_activation_epoch'),
         'mainnet_epoch': feat.get('mainnet_activation_epoch'),
-        'estimated_activation_date': feat.get('estimated_activation_date'),
-        'estimated_epoch': feat.get('estimated_epoch'),
-        'epochs_away': feat.get('epochs_away'),
     }
 
 
@@ -163,18 +136,20 @@ async def main():
 
     new_features = find_new_features(previous, current)
     newly_activated = find_newly_activated(previous, current)
-    upcoming_activations = await estimate_activation_dates(current)
+    pending_mainnet = find_pending_mainnet(current)
+    current_epochs = await get_all_current_epochs()
 
     notifications = {
         'run_date': datetime.now(timezone.utc).isoformat(),
+        **current_epochs,
         'new_features': [format_feature_summary(f) for f in new_features],
-        'upcoming_activations': [format_feature_summary(f) for f in upcoming_activations],
+        'pending_mainnet': [format_feature_summary(f) for f in pending_mainnet],
         'newly_activated': [format_feature_summary(f) for f in newly_activated],
     }
 
-    total = len(new_features) + len(upcoming_activations) + len(newly_activated)
+    total = len(new_features) + len(pending_mainnet) + len(newly_activated)
     print(f"Detected {len(new_features)} new features, "
-          f"{len(upcoming_activations)} upcoming activations, "
+          f"{len(pending_mainnet)} pending mainnet, "
           f"{len(newly_activated)} newly activated")
 
     with open(NOTIFICATIONS_PATH, 'w') as f:
