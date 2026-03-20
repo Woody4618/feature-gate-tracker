@@ -1654,5 +1654,27 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": ""
+  },
+  {
+    "key": "shredXP8xLjJWp1AWh3gAFsFn4GSH1vohhCMDHw5koU",
+    "title": "SIMD-0337: Markers for Alpenglow Fast Leader Handover, DATA_COMPLETE_SHRED placement rules",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0337-parent-ready-update-marker.md"
+    ],
+    "simds": [
+      "0337"
+    ],
+    "owners": [],
+    "min_agave_versions": [
+      "v4.0.0"
+    ],
+    "min_fd_versions": [],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": ""
   }
 ]
