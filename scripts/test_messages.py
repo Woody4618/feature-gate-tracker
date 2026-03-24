@@ -7,13 +7,28 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
-from notify import build_plain_message, _slack_feature_block, _build_tweets, _build_telegram_message
+from notify import build_plain_message, _slack_feature_block, _build_tweets, _build_telegram_message, _get_countdowns
 import json
 
 CURRENT_EPOCHS = {
     'current_mainnet_epoch': 758,
     'current_testnet_epoch': 928,
     'current_devnet_epoch': 1045,
+    'mainnet_countdown': {
+        'remaining_slots': 180000,
+        'remaining_hours': 20.0,
+        'next_epoch': 759,
+    },
+    'testnet_countdown': {
+        'remaining_slots': 200000,
+        'remaining_hours': 22.2,
+        'next_epoch': 929,
+    },
+    'devnet_countdown': {
+        'remaining_slots': 50000,
+        'remaining_hours': 5.6,
+        'next_epoch': 1046,
+    },
 }
 
 
@@ -121,14 +136,15 @@ def print_scenario(name, data):
 
     # Slack blocks (show the JSON structure)
     print(f"\n--- Slack (Block Kit preview) ---\n")
+    countdowns = _get_countdowns(data)
     if data.get('new_features'):
         for feat in data['new_features']:
-            block = _slack_feature_block(feat, data, show_status=True)
+            block = _slack_feature_block(feat, data, show_status=True, countdowns=countdowns)
             print(block['text']['text'])
             print()
     if data.get('pending_mainnet'):
         for feat in data['pending_mainnet']:
-            block = _slack_feature_block(feat, data)
+            block = _slack_feature_block(feat, data, countdowns=countdowns)
             print(block['text']['text'])
             print()
     if data.get('newly_activated'):

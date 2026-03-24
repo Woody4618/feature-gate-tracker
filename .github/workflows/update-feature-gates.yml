@@ -3,7 +3,7 @@ name: Update Feature Gates
 on:
   workflow_dispatch:
   schedule:
-    - cron: "23 3 * * *" # Daily at 3:23 AM UTC
+    - cron: "23 */8 * * *" # Every 8 hours at :23 past the hour
 
 permissions:
   contents: write

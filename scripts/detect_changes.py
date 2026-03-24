@@ -19,6 +19,7 @@ import sys
 from datetime import datetime, timezone
 
 from solana.rpc.async_api import AsyncClient
+from solders.pubkey import Pubkey
 
 FEATURE_GATES_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'feature_gates.json')
 NOTIFICATIONS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'notifications.json')
@@ -65,36 +66,86 @@ def find_newly_activated(previous: list[dict], current: list[dict]) -> list[dict
     return result
 
 
-async def get_current_epoch(rpc_url: str, cluster_name: str) -> int | None:
+SLOT_DURATION_MS = 400
+
+
+async def get_epoch_info_for_cluster(rpc_url: str, cluster_name: str) -> dict:
+    """Fetch current epoch and countdown to next epoch for a cluster."""
     try:
         async with AsyncClient(rpc_url) as connection:
             epoch_info_resp = await connection.get_epoch_info()
-            epoch = epoch_info_resp.value.epoch
-            print(f"Current {cluster_name} epoch: {epoch}")
-            return epoch
+            info = epoch_info_resp.value
+            remaining_slots = info.slots_in_epoch - info.slot_index
+            remaining_seconds = (remaining_slots * SLOT_DURATION_MS) / 1000
+            remaining_hours = remaining_seconds / 3600
+            print(f"Current {cluster_name} epoch: {info.epoch}")
+            return {
+                'epoch': info.epoch,
+                'countdown': {
+                    'remaining_slots': remaining_slots,
+                    'remaining_hours': round(remaining_hours, 1),
+                    'next_epoch': info.epoch + 1,
+                },
+            }
     except Exception as e:
-        print(f"Failed to get current epoch from {cluster_name}: {e}")
-        return None
+        print(f"Failed to get epoch info from {cluster_name}: {e}")
+        return {}
 
 
-async def get_all_current_epochs() -> dict:
+def format_countdown(hours: float) -> str:
+    if hours < 1:
+        return f"~{int(hours * 60)}m"
+    days = int(hours // 24)
+    h = int(hours % 24)
+    if days > 0:
+        return f"~{days}d {h}h"
+    return f"~{h}h"
+
+
+async def get_all_cluster_info() -> dict:
     mainnet, testnet, devnet = await asyncio.gather(
-        get_current_epoch(MAINNET_RPC_URL, "mainnet"),
-        get_current_epoch(TESTNET_RPC_URL, "testnet"),
-        get_current_epoch(DEVNET_RPC_URL, "devnet"),
+        get_epoch_info_for_cluster(MAINNET_RPC_URL, "mainnet"),
+        get_epoch_info_for_cluster(TESTNET_RPC_URL, "testnet"),
+        get_epoch_info_for_cluster(DEVNET_RPC_URL, "devnet"),
     )
     return {
-        'current_mainnet_epoch': mainnet,
-        'current_testnet_epoch': testnet,
-        'current_devnet_epoch': devnet,
+        'current_mainnet_epoch': mainnet.get('epoch'),
+        'current_testnet_epoch': testnet.get('epoch'),
+        'current_devnet_epoch': devnet.get('epoch'),
+        'mainnet_countdown': mainnet.get('countdown', {}),
+        'testnet_countdown': testnet.get('countdown', {}),
+        'devnet_countdown': devnet.get('countdown', {}),
     }
 
 
-def find_pending_mainnet(features: list[dict]) -> list[dict]:
+RATE_LIMIT_DELAY = 0.5
+MAX_RETRIES = 3
+
+
+async def check_mainnet_account_exists(connection: AsyncClient, key: str) -> bool:
+    """Check if a feature account has been created on mainnet (submitted for activation)."""
+    for attempt in range(MAX_RETRIES):
+        try:
+            await asyncio.sleep(RATE_LIMIT_DELAY)
+            account = await connection.get_account_info(Pubkey.from_string(key))
+            return account.value is not None
+        except Exception as e:
+            if '429' in str(e) and attempt < MAX_RETRIES - 1:
+                wait = 2 ** (attempt + 1)
+                print(f"Rate limited checking {key}, retrying in {wait}s...")
+                await asyncio.sleep(wait)
+            else:
+                print(f"Failed to check {key}: {e}")
+                return False
+    return False
+
+
+async def find_pending_mainnet(features: list[dict]) -> list[dict]:
     """
-    Features that are active on devnet + testnet but not yet on mainnet.
-    These are in the pipeline for mainnet activation -- no estimated date
-    since we don't know when the activation will be triggered.
+    Features that are active on devnet + testnet but not yet on mainnet,
+    AND whose feature account has been created on mainnet (meaning Anza devops
+    has submitted the activation). Features whose account doesn't exist on
+    mainnet yet are not included -- they haven't entered the activation pipeline.
     Sorted by testnet activation epoch (earliest first = likely activated sooner).
     """
     candidates = [
@@ -104,7 +155,23 @@ def find_pending_mainnet(features: list[dict]) -> list[dict]:
         and not f.get('mainnet_activation_epoch')
     ]
     candidates.sort(key=lambda f: f.get('testnet_activation_epoch', 0))
-    return candidates
+
+    if not candidates:
+        return []
+
+    async with AsyncClient(MAINNET_RPC_URL) as connection:
+        pending = []
+        for feat in candidates:
+            key = feat.get('key')
+            if not key:
+                continue
+            exists = await check_mainnet_account_exists(connection, key)
+            if exists:
+                print(f"  {key}: account exists on mainnet (pending activation)")
+                pending.append(feat)
+            else:
+                print(f"  {key}: account not yet created on mainnet, skipping")
+        return pending
 
 
 def format_feature_summary(feat: dict) -> dict:
@@ -136,12 +203,13 @@ async def main():
 
     new_features = find_new_features(previous, current)
     newly_activated = find_newly_activated(previous, current)
-    pending_mainnet = find_pending_mainnet(current)
-    current_epochs = await get_all_current_epochs()
+    print("Checking which pending features have accounts on mainnet...")
+    pending_mainnet = await find_pending_mainnet(current)
+    cluster_info = await get_all_cluster_info()
 
     notifications = {
         'run_date': datetime.now(timezone.utc).isoformat(),
-        **current_epochs,
+        **cluster_info,
         'new_features': [format_feature_summary(f) for f in new_features],
         'pending_mainnet': [format_feature_summary(f) for f in pending_mainnet],
         'newly_activated': [format_feature_summary(f) for f in newly_activated],
