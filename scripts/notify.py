@@ -61,7 +61,8 @@ def _cluster_status(feat: dict) -> str:
 def _epoch_line(label: str, activation_epoch, current_epoch, countdown: dict | None = None) -> str:
     if activation_epoch and current_epoch:
         diff = current_epoch - activation_epoch
-        return f"{label}: activated epoch {activation_epoch} ({diff} epochs ago)"
+        age = "current epoch" if diff == 0 else f"{diff} epochs ago"
+        return f"{label}: activated epoch {activation_epoch} ({age})"
     elif activation_epoch:
         return f"{label}: activated epoch {activation_epoch}"
     elif countdown and countdown.get('next_epoch') and countdown.get('remaining_hours') is not None:
@@ -324,7 +325,8 @@ def _escape_md(text: str) -> str:
 def _tg_epoch_line(label: str, activation_epoch, current_epoch, countdown: dict | None = None) -> str:
     if activation_epoch and current_epoch:
         diff = current_epoch - activation_epoch
-        return f"{label}: activated epoch *{activation_epoch}* \\({diff} epochs ago\\)"
+        age = "current epoch" if diff == 0 else f"{diff} epochs ago"
+        return f"{label}: activated epoch *{activation_epoch}* \\({age}\\)"
     elif activation_epoch:
         return f"{label}: activated epoch *{activation_epoch}*"
     elif countdown and countdown.get('next_epoch') and countdown.get('remaining_hours') is not None:
