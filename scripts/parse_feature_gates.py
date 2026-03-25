@@ -161,7 +161,7 @@ async def fetch_activation_epoch(connection: AsyncClient, epoch_schedule, key: s
         is_activated = account.value.data[0]
         if is_activated:
             activation_slot = int.from_bytes(account.value.data[1:9], 'little')
-            return get_epoch_for_slot(epoch_schedule, activation_slot) + 1
+            return get_epoch_for_slot(epoch_schedule, activation_slot)
         else:
             return backup_epoch
     else:

@@ -83,7 +83,7 @@ async def main():
 
                     if is_activated:
                         activation_slot = int.from_bytes(account.value.data[1:9], 'little')
-                        activation_epoch = get_epoch_for_slot(epoch_schedule, activation_slot) + 1
+                        activation_epoch = get_epoch_for_slot(epoch_schedule, activation_slot)
                         print(f"  {feature['key']} activated at epoch {activation_epoch}")
                         feature['mainnet_activation_epoch'] = activation_epoch
                     else:
