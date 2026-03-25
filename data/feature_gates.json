@@ -1676,5 +1676,27 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": ""
+  },
+  {
+    "key": "vcmrbYbiMVKaq1snKP6eCacNDcr6qZvpCNUjmk6gxvZ",
+    "title": "SIMD-0340 validate chained block id",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0340-validate-chained-block-id.md"
+    ],
+    "simds": [
+      "0340"
+    ],
+    "owners": [],
+    "min_agave_versions": [
+      "v4.0.0-beta.x"
+    ],
+    "min_fd_versions": [],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": ""
   }
 ]
