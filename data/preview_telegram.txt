@@ -1,0 +1,19 @@
+*New Solana Feature Gates Detected*
+
+SIMD\-0340: SIMD\-0340 validate chained block id  \[Pending\]
+Mainnet: pending ⏳
+Devnet: pending ⏳
+Testnet: pending ⏳
+Key: `vcmrbYbiMVKaq1snKP6eCacNDcr6qZvpCNUjmk6gxvZ`
+[View on Explorer](https://explorer.solana.com/address/vcmrbYbiMVKaq1snKP6eCacNDcr6qZvpCNUjmk6gxvZ)
+[View SIMD](https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0340-validate-chained-block-id.md)
+
+*Pending Devnet Activation*
+Devnet next epoch: *1044* \(in \~1h\)
+
+SIMD\-0266: Efficient Token program
+Mainnet: pending ⏳
+Devnet: pending ⏳ activates epoch *1044* \(\~1h\)
+Testnet: activated epoch *930* \(2 epochs ago\)
+Key: `ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP`
+[View on Explorer](https://explorer.solana.com/address/ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP)

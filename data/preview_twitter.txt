@@ -1,0 +1,14 @@
+--- Tweet 1 (161 chars) ---
+New Solana feature gate [Pending]
+
+SIMD-0340: SIMD-0340 validate chained block id
+https://explorer.solana.com/address/vcmrbYbiMVKaq1snKP6eCacNDcr6qZvpCNUjmk6gxvZ
+
+--- Tweet 2 (230 chars) ---
+Pending devnet activation
+
+SIMD-0266: Efficient Token program
+Devnet: pending ⏳ activates epoch 1044 (~1h)
+Testnet: activated epoch 930 (2 epochs ago)
+https://explorer.solana.com/address/ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP
+

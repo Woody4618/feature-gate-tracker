@@ -1,0 +1,38 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "New Solana Feature Gates Detected"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*SIMD-0340*: SIMD-0340 validate chained block id  _Pending_\n<https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0340-validate-chained-block-id.md|View SIMD>\n<https://explorer.solana.com/address/vcmrbYbiMVKaq1snKP6eCacNDcr6qZvpCNUjmk6gxvZ|View on Explorer> | `vcmrbYbiMVKaq1snKP6eCacNDcr6qZvpCNUjmk6gxvZ`\nMainnet: pending \u23f3\nDevnet: pending \u23f3\nTestnet: pending \u23f3\nAgave: v4.0.0-beta.x"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "Pending Devnet Activation \u2014 Devnet Next epoch: 1044 (in ~1h)"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*SIMD-0266*: Efficient Token program\n<https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0266-efficient-token-program.md|View SIMD>\n<https://explorer.solana.com/address/ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP|View on Explorer> | `ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP`\nMainnet: pending \u23f3\nDevnet: pending \u23f3 activates epoch 1044 (~1h)\nTestnet: activated epoch 930 (2 epochs ago)\nAgave: v3.1.8"
+      }
+    },
+    {
+      "type": "divider"
+    }
+  ]
+}

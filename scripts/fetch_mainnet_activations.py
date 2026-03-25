@@ -55,9 +55,7 @@ async def main():
         epoch_schedule = (await connection.get_epoch_schedule()).value
 
         for feature in features:
-            if (feature.get('devnet_activation_epoch')
-                    and feature.get('testnet_activation_epoch')
-                    and not feature.get('mainnet_activation_epoch')):
+            if not feature.get('mainnet_activation_epoch'):
                 print(f"Fetching feature gate {feature['key']}")
 
                 account = None

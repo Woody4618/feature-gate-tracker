@@ -52,8 +52,18 @@ def find_new_features(previous: list[dict], current: list[dict]) -> list[dict]:
     return [f for f in current if f.get('key') and f['key'] not in prev_keys]
 
 
-def find_newly_activated(previous: list[dict], current: list[dict], epoch_field: str = 'mainnet_activation_epoch') -> list[dict]:
-    """Features that just got an activation epoch (had None before, has value now)."""
+MAX_ACTIVATION_AGE_EPOCHS = 2
+
+
+def find_newly_activated(
+    previous: list[dict],
+    current: list[dict],
+    epoch_field: str = 'mainnet_activation_epoch',
+    current_epoch: int | None = None,
+) -> list[dict]:
+    """Features that just got an activation epoch (had None before, has value now).
+    Filters out activations older than MAX_ACTIVATION_AGE_EPOCHS to avoid
+    reporting stale backfilled data as new activations."""
     prev_by_key = {f['key']: f for f in previous if f.get('key')}
     result = []
     for feat in current:
@@ -62,6 +72,12 @@ def find_newly_activated(previous: list[dict], current: list[dict], epoch_field:
             continue
         prev = prev_by_key.get(key)
         if prev and not prev.get(epoch_field) and feat.get(epoch_field):
+            if current_epoch is not None:
+                age = current_epoch - feat[epoch_field]
+                if age > MAX_ACTIVATION_AGE_EPOCHS:
+                    print(f"  Skipping {key}: {epoch_field} = {feat[epoch_field]} "
+                          f"({age} epochs ago, stale backfill)")
+                    continue
             result.append(feat)
     return result
 
@@ -122,13 +138,20 @@ RATE_LIMIT_DELAY = 0.5
 MAX_RETRIES = 3
 
 
-async def check_account_exists(connection: AsyncClient, key: str) -> bool:
-    """Check if a feature account has been created on a cluster."""
+FEATURE_GATE_PROGRAM_ID = Pubkey.from_string("Feature111111111111111111111111111111111111")
+
+
+async def check_feature_account(connection: AsyncClient, key: str) -> bool:
+    """Check if a feature account exists and is owned by the Feature Gate program.
+    Accounts that exist but are owned by another program (e.g. System Program
+    because someone just sent SOL to the address) are not real feature accounts."""
     for attempt in range(MAX_RETRIES):
         try:
             await asyncio.sleep(RATE_LIMIT_DELAY)
             account = await connection.get_account_info(Pubkey.from_string(key))
-            return account.value is not None
+            if account.value is None:
+                return False
+            return account.value.owner == FEATURE_GATE_PROGRAM_ID
         except Exception as e:
             if '429' in str(e) and attempt < MAX_RETRIES - 1:
                 wait = 2 ** (attempt + 1)
@@ -171,12 +194,12 @@ async def find_pending_cluster(
             key = feat.get('key')
             if not key:
                 continue
-            exists = await check_account_exists(connection, key)
-            if exists:
-                print(f"  {key}: account exists on {cluster_name} (pending activation)")
+            is_feature = await check_feature_account(connection, key)
+            if is_feature:
+                print(f"  {key}: feature account on {cluster_name} (pending activation)")
                 pending.append(feat)
             else:
-                print(f"  {key}: account not yet created on {cluster_name}, skipping")
+                print(f"  {key}: no feature account on {cluster_name}, skipping")
         return pending
 
 
@@ -208,26 +231,27 @@ async def main():
     current = load_current_features()
 
     new_features = find_new_features(previous, current)
-    newly_activated = find_newly_activated(previous, current, 'mainnet_activation_epoch')
-    newly_activated_devnet = find_newly_activated(previous, current, 'devnet_activation_epoch')
-    newly_activated_testnet = find_newly_activated(previous, current, 'testnet_activation_epoch')
+    cluster_info = await get_all_cluster_info()
+
+    newly_activated = find_newly_activated(
+        previous, current, 'mainnet_activation_epoch', cluster_info.get('current_mainnet_epoch'))
+    newly_activated_devnet = find_newly_activated(
+        previous, current, 'devnet_activation_epoch', cluster_info.get('current_devnet_epoch'))
+    newly_activated_testnet = find_newly_activated(
+        previous, current, 'testnet_activation_epoch', cluster_info.get('current_testnet_epoch'))
 
     pending_mainnet = await find_pending_cluster(
         current, MAINNET_RPC_URL, "mainnet",
         'mainnet_activation_epoch',
-        prerequisite_fields=['devnet_activation_epoch', 'testnet_activation_epoch'],
     )
     pending_devnet = await find_pending_cluster(
         current, DEVNET_RPC_URL, "devnet",
         'devnet_activation_epoch',
-        prerequisite_fields=['testnet_activation_epoch'],
     )
     pending_testnet = await find_pending_cluster(
         current, TESTNET_RPC_URL, "testnet",
         'testnet_activation_epoch',
     )
-
-    cluster_info = await get_all_cluster_info()
 
     notifications = {
         'run_date': datetime.now(timezone.utc).isoformat(),
