@@ -109,16 +109,101 @@ def scenario_newly_activated():
     }
 
 
+def scenario_pending_devnet():
+    """Feature active on testnet, account exists on devnet, pending devnet activation."""
+    return {
+        **CURRENT_EPOCHS,
+        'new_features': [],
+        'pending_mainnet': [],
+        'pending_devnet': [
+            {
+                'key': 'ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP',
+                'title': 'Efficient Token program',
+                'simds': 'SIMD-0266',
+                'simd_links': ['https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0266-efficient-token-program.md'],
+                'agave_versions': ['v3.1.8'],
+                'fd_versions': ['v0.811.30108'],
+                'testnet_epoch': 931,
+                'devnet_epoch': None,
+                'mainnet_epoch': None,
+            }
+        ],
+        'pending_testnet': [],
+        'newly_activated': [],
+        'newly_activated_devnet': [],
+        'newly_activated_testnet': [],
+    }
+
+
+def scenario_newly_activated_devnet():
+    """A feature just got activated on devnet."""
+    return {
+        **CURRENT_EPOCHS,
+        'new_features': [],
+        'pending_mainnet': [],
+        'pending_devnet': [],
+        'pending_testnet': [],
+        'newly_activated': [],
+        'newly_activated_devnet': [
+            {
+                'key': 'ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP',
+                'title': 'Efficient Token program',
+                'simds': 'SIMD-0266',
+                'simd_links': ['https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0266-efficient-token-program.md'],
+                'agave_versions': ['v3.1.8'],
+                'fd_versions': ['v0.811.30108'],
+                'testnet_epoch': 931,
+                'devnet_epoch': 1044,
+                'mainnet_epoch': None,
+            }
+        ],
+        'newly_activated_testnet': [],
+    }
+
+
+def scenario_newly_activated_testnet():
+    """A feature just got activated on testnet."""
+    return {
+        **CURRENT_EPOCHS,
+        'new_features': [],
+        'pending_mainnet': [],
+        'pending_devnet': [],
+        'pending_testnet': [],
+        'newly_activated': [],
+        'newly_activated_devnet': [],
+        'newly_activated_testnet': [
+            {
+                'key': 'ptokFjwyJtrwCa9Kgo9xoDS59V4QccBGEaRFnRPnSdP',
+                'title': 'Efficient Token program',
+                'simds': 'SIMD-0266',
+                'simd_links': ['https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0266-efficient-token-program.md'],
+                'agave_versions': ['v3.1.8'],
+                'fd_versions': ['v0.811.30108'],
+                'testnet_epoch': 931,
+                'devnet_epoch': None,
+                'mainnet_epoch': None,
+            }
+        ],
+    }
+
+
 def scenario_combined():
-    """All three happening at once (busy day)."""
+    """All types happening at once (busy day)."""
     s1 = scenario_new_feature()
     s2 = scenario_pending_mainnet()
     s3 = scenario_newly_activated()
+    s4 = scenario_newly_activated_devnet()
+    s5 = scenario_newly_activated_testnet()
+    s6 = scenario_pending_devnet()
     return {
         **CURRENT_EPOCHS,
         'new_features': s1['new_features'],
         'pending_mainnet': s2['pending_mainnet'],
+        'pending_devnet': s6['pending_devnet'],
+        'pending_testnet': [],
         'newly_activated': s3['newly_activated'],
+        'newly_activated_devnet': s4['newly_activated_devnet'],
+        'newly_activated_testnet': s5['newly_activated_testnet'],
     }
 
 
@@ -142,14 +227,25 @@ def print_scenario(name, data):
             block = _slack_feature_block(feat, data, show_status=True, countdowns=countdowns)
             print(block['text']['text'])
             print()
-    if data.get('pending_mainnet'):
-        for feat in data['pending_mainnet']:
-            block = _slack_feature_block(feat, data, countdowns=countdowns)
-            print(block['text']['text'])
-            print()
+    for pending_key in ['pending_mainnet', 'pending_devnet', 'pending_testnet']:
+        if data.get(pending_key):
+            for feat in data[pending_key]:
+                block = _slack_feature_block(feat, data, countdowns=countdowns)
+                print(block['text']['text'])
+                print()
     if data.get('newly_activated'):
         for feat in data['newly_activated']:
             block = _slack_feature_block(feat, data)
+            print(block['text']['text'])
+            print()
+    if data.get('newly_activated_devnet'):
+        for feat in data['newly_activated_devnet']:
+            block = _slack_feature_block(feat, data, countdowns=countdowns)
+            print(block['text']['text'])
+            print()
+    if data.get('newly_activated_testnet'):
+        for feat in data['newly_activated_testnet']:
+            block = _slack_feature_block(feat, data, countdowns=countdowns)
             print(block['text']['text'])
             print()
 
@@ -171,5 +267,8 @@ def print_scenario(name, data):
 if __name__ == "__main__":
     print_scenario("New feature gate added (testnet only)", scenario_new_feature())
     print_scenario("Pending mainnet activation", scenario_pending_mainnet())
+    print_scenario("Pending devnet activation", scenario_pending_devnet())
     print_scenario("Newly activated on mainnet", scenario_newly_activated())
-    print_scenario("All three at once", scenario_combined())
+    print_scenario("Newly activated on devnet", scenario_newly_activated_devnet())
+    print_scenario("Newly activated on testnet", scenario_newly_activated_testnet())
+    print_scenario("All types at once", scenario_combined())

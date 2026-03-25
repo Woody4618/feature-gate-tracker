@@ -42,7 +42,11 @@ def has_anything_to_send(data: dict) -> bool:
     return bool(
         data.get('new_features')
         or data.get('pending_mainnet')
+        or data.get('pending_devnet')
+        or data.get('pending_testnet')
         or data.get('newly_activated')
+        or data.get('newly_activated_devnet')
+        or data.get('newly_activated_testnet')
     )
 
 
@@ -61,7 +65,12 @@ def _cluster_status(feat: dict) -> str:
 def _epoch_line(label: str, activation_epoch, current_epoch, countdown: dict | None = None) -> str:
     if activation_epoch and current_epoch:
         diff = current_epoch - activation_epoch
-        age = "current epoch" if diff == 0 else f"{diff} epochs ago"
+        if diff == 0:
+            age = "current epoch"
+        elif diff == 1:
+            age = "1 epoch ago"
+        else:
+            age = f"{diff} epochs ago"
         return f"{label}: activated epoch {activation_epoch} ({age})"
     elif activation_epoch:
         return f"{label}: activated epoch {activation_epoch}"
@@ -133,11 +142,45 @@ def build_plain_message(data: dict) -> str:
             lines.append(_feature_line_plain(feat, data, countdowns=countdowns))
         sections.append('\n'.join(lines))
 
+    if data.get('pending_devnet'):
+        lines = ["PENDING DEVNET ACTIVATION"]
+        header = _countdown_header(countdowns.get('devnet'))
+        if header:
+            lines.append(f"  Devnet {header}")
+        for feat in data['pending_devnet']:
+            lines.append("")
+            lines.append(_feature_line_plain(feat, data, countdowns=countdowns))
+        sections.append('\n'.join(lines))
+
+    if data.get('pending_testnet'):
+        lines = ["PENDING TESTNET ACTIVATION"]
+        header = _countdown_header(countdowns.get('testnet'))
+        if header:
+            lines.append(f"  Testnet {header}")
+        for feat in data['pending_testnet']:
+            lines.append("")
+            lines.append(_feature_line_plain(feat, data, countdowns=countdowns))
+        sections.append('\n'.join(lines))
+
     if data.get('newly_activated'):
         lines = ["NEWLY ACTIVATED ON MAINNET"]
         for feat in data['newly_activated']:
             lines.append("")
             lines.append(_feature_line_plain(feat, data))
+        sections.append('\n'.join(lines))
+
+    if data.get('newly_activated_devnet'):
+        lines = ["NEWLY ACTIVATED ON DEVNET"]
+        for feat in data['newly_activated_devnet']:
+            lines.append("")
+            lines.append(_feature_line_plain(feat, data, countdowns=countdowns))
+        sections.append('\n'.join(lines))
+
+    if data.get('newly_activated_testnet'):
+        lines = ["NEWLY ACTIVATED ON TESTNET"]
+        for feat in data['newly_activated_testnet']:
+            lines.append("")
+            lines.append(_feature_line_plain(feat, data, countdowns=countdowns))
         sections.append('\n'.join(lines))
 
     return '\n\n'.join(sections)
@@ -199,6 +242,32 @@ def send_slack(data: dict):
             blocks.append(_slack_feature_block(feat, data, countdowns=countdowns))
         blocks.append({"type": "divider"})
 
+    if data.get('pending_devnet'):
+        devnet_hdr = _countdown_header(countdowns.get('devnet'))
+        header_text = "Pending Devnet Activation"
+        if devnet_hdr:
+            header_text += f" \u2014 Devnet {devnet_hdr}"
+        blocks.append({
+            "type": "header",
+            "text": {"type": "plain_text", "text": header_text[:150]}
+        })
+        for feat in data['pending_devnet']:
+            blocks.append(_slack_feature_block(feat, data, countdowns=countdowns))
+        blocks.append({"type": "divider"})
+
+    if data.get('pending_testnet'):
+        testnet_hdr = _countdown_header(countdowns.get('testnet'))
+        header_text = "Pending Testnet Activation"
+        if testnet_hdr:
+            header_text += f" \u2014 Testnet {testnet_hdr}"
+        blocks.append({
+            "type": "header",
+            "text": {"type": "plain_text", "text": header_text[:150]}
+        })
+        for feat in data['pending_testnet']:
+            blocks.append(_slack_feature_block(feat, data, countdowns=countdowns))
+        blocks.append({"type": "divider"})
+
     if data.get('newly_activated'):
         blocks.append({
             "type": "header",
@@ -206,6 +275,24 @@ def send_slack(data: dict):
         })
         for feat in data['newly_activated']:
             blocks.append(_slack_feature_block(feat, data))
+        blocks.append({"type": "divider"})
+
+    if data.get('newly_activated_devnet'):
+        blocks.append({
+            "type": "header",
+            "text": {"type": "plain_text", "text": "Newly Activated on Devnet"}
+        })
+        for feat in data['newly_activated_devnet']:
+            blocks.append(_slack_feature_block(feat, data, countdowns=countdowns))
+        blocks.append({"type": "divider"})
+
+    if data.get('newly_activated_testnet'):
+        blocks.append({
+            "type": "header",
+            "text": {"type": "plain_text", "text": "Newly Activated on Testnet"}
+        })
+        for feat in data['newly_activated_testnet']:
+            blocks.append(_slack_feature_block(feat, data, countdowns=countdowns))
 
     if not blocks:
         return
@@ -255,6 +342,30 @@ def _build_tweets(data: dict) -> list[str]:
         )
         tweets.append(tweet[:280])
 
+    for feat in data.get('pending_devnet', []):
+        explorer = _explorer_url(feat['key'])
+        devnet_str = _epoch_line('Devnet', feat.get('devnet_epoch'), cd, countdowns.get('devnet'))
+        testnet_str = _epoch_line('Testnet', feat.get('testnet_epoch'), ct, countdowns.get('testnet'))
+        tweet = (
+            f"Pending devnet activation\n\n"
+            f"{feat['simds']}: {feat['title']}\n"
+            f"{devnet_str}\n"
+            f"{testnet_str}\n"
+            f"{explorer}"
+        )
+        tweets.append(tweet[:280])
+
+    for feat in data.get('pending_testnet', []):
+        explorer = _explorer_url(feat['key'])
+        testnet_str = _epoch_line('Testnet', feat.get('testnet_epoch'), ct, countdowns.get('testnet'))
+        tweet = (
+            f"Pending testnet activation\n\n"
+            f"{feat['simds']}: {feat['title']}\n"
+            f"{testnet_str}\n"
+            f"{explorer}"
+        )
+        tweets.append(tweet[:280])
+
     for feat in data.get('newly_activated', []):
         explorer = _explorer_url(feat['key'])
         mainnet_epoch = feat.get('mainnet_epoch', '?')
@@ -262,6 +373,28 @@ def _build_tweets(data: dict) -> list[str]:
             f"Solana feature gate activated on mainnet \u2705\n\n"
             f"{feat['simds']}: {feat['title']}\n"
             f"Activated epoch {mainnet_epoch}\n"
+            f"{explorer}"
+        )
+        tweets.append(tweet[:280])
+
+    for feat in data.get('newly_activated_devnet', []):
+        explorer = _explorer_url(feat['key'])
+        devnet_epoch = feat.get('devnet_epoch', '?')
+        tweet = (
+            f"Solana feature gate activated on devnet\n\n"
+            f"{feat['simds']}: {feat['title']}\n"
+            f"Devnet epoch {devnet_epoch}\n"
+            f"{explorer}"
+        )
+        tweets.append(tweet[:280])
+
+    for feat in data.get('newly_activated_testnet', []):
+        explorer = _explorer_url(feat['key'])
+        testnet_epoch = feat.get('testnet_epoch', '?')
+        tweet = (
+            f"Solana feature gate activated on testnet\n\n"
+            f"{feat['simds']}: {feat['title']}\n"
+            f"Testnet epoch {testnet_epoch}\n"
             f"{explorer}"
         )
         tweets.append(tweet[:280])
@@ -325,7 +458,12 @@ def _escape_md(text: str) -> str:
 def _tg_epoch_line(label: str, activation_epoch, current_epoch, countdown: dict | None = None) -> str:
     if activation_epoch and current_epoch:
         diff = current_epoch - activation_epoch
-        age = "current epoch" if diff == 0 else f"{diff} epochs ago"
+        if diff == 0:
+            age = "current epoch"
+        elif diff == 1:
+            age = "1 epoch ago"
+        else:
+            age = f"{diff} epochs ago"
         return f"{label}: activated epoch *{activation_epoch}* \\({age}\\)"
     elif activation_epoch:
         return f"{label}: activated epoch *{activation_epoch}*"
@@ -361,16 +499,51 @@ def _build_telegram_message(data: dict) -> str:
             lines.append("")
         sections.append('\n'.join(lines))
 
-    if data.get('pending_mainnet'):
-        mn_cd = countdowns.get('mainnet', {})
-        lines = [r"*Pending Mainnet Activation*"]
-        next_ep = mn_cd.get('next_epoch')
-        remaining_h = mn_cd.get('remaining_hours')
-        if next_ep and remaining_h is not None:
-            cd_str = _escape_md(format_countdown(remaining_h))
-            lines.append(f"Mainnet next epoch: *{next_ep}* \\(in {cd_str}\\)")
-        lines.append("")
-        for feat in data['pending_mainnet']:
+    for pending_key, cluster_label, cluster_cd_key in [
+        ('pending_mainnet', 'Mainnet', 'mainnet'),
+        ('pending_devnet', 'Devnet', 'devnet'),
+        ('pending_testnet', 'Testnet', 'testnet'),
+    ]:
+        if data.get(pending_key):
+            cl_cd = countdowns.get(cluster_cd_key, {})
+            lines = [f"*Pending {cluster_label} Activation*"]
+            next_ep = cl_cd.get('next_epoch')
+            remaining_h = cl_cd.get('remaining_hours')
+            if next_ep and remaining_h is not None:
+                cd_str = _escape_md(format_countdown(remaining_h))
+                lines.append(f"{cluster_label} next epoch: *{next_ep}* \\(in {cd_str}\\)")
+            lines.append("")
+            for feat in data[pending_key]:
+                title = _escape_md(feat['title'])
+                simds = _escape_md(feat['simds'])
+                explorer = _explorer_url(feat['key'])
+                lines.append(f"{simds}: {title}")
+                lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm, countdowns.get('mainnet')))
+                lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd, countdowns.get('devnet')))
+                lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct, countdowns.get('testnet')))
+                lines.append(f"Key: `{feat['key']}`")
+                lines.append(f"[View on Explorer]({explorer})")
+                lines.append("")
+            sections.append('\n'.join(lines))
+
+    if data.get('newly_activated'):
+        lines = [r"*Newly Activated on Mainnet*", ""]
+        for feat in data['newly_activated']:
+            title = _escape_md(feat['title'])
+            simds = _escape_md(feat['simds'])
+            explorer = _explorer_url(feat['key'])
+            lines.append(f"{simds}: {title}")
+            lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm))
+            lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd))
+            lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct))
+            lines.append(f"Key: `{feat['key']}`")
+            lines.append(f"[View on Explorer]({explorer})")
+            lines.append("")
+        sections.append('\n'.join(lines))
+
+    if data.get('newly_activated_devnet'):
+        lines = [r"*Newly Activated on Devnet*", ""]
+        for feat in data['newly_activated_devnet']:
             title = _escape_md(feat['title'])
             simds = _escape_md(feat['simds'])
             explorer = _explorer_url(feat['key'])
@@ -383,16 +556,16 @@ def _build_telegram_message(data: dict) -> str:
             lines.append("")
         sections.append('\n'.join(lines))
 
-    if data.get('newly_activated'):
-        lines = [r"*Newly Activated on Mainnet*", ""]
-        for feat in data['newly_activated']:
+    if data.get('newly_activated_testnet'):
+        lines = [r"*Newly Activated on Testnet*", ""]
+        for feat in data['newly_activated_testnet']:
             title = _escape_md(feat['title'])
             simds = _escape_md(feat['simds'])
             explorer = _explorer_url(feat['key'])
             lines.append(f"{simds}: {title}")
-            lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm))
-            lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd))
-            lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct))
+            lines.append(_tg_epoch_line('Mainnet', feat.get('mainnet_epoch'), cm, countdowns.get('mainnet')))
+            lines.append(_tg_epoch_line('Devnet', feat.get('devnet_epoch'), cd, countdowns.get('devnet')))
+            lines.append(_tg_epoch_line('Testnet', feat.get('testnet_epoch'), ct, countdowns.get('testnet')))
             lines.append(f"Key: `{feat['key']}`")
             lines.append(f"[View on Explorer]({explorer})")
             lines.append("")
@@ -441,7 +614,11 @@ def main():
     print(f"Notifications to send: "
           f"{len(data.get('new_features', []))} new, "
           f"{len(data.get('pending_mainnet', []))} pending mainnet, "
-          f"{len(data.get('newly_activated', []))} activated")
+          f"{len(data.get('pending_devnet', []))} pending devnet, "
+          f"{len(data.get('pending_testnet', []))} pending testnet, "
+          f"{len(data.get('newly_activated', []))} activated mainnet, "
+          f"{len(data.get('newly_activated_devnet', []))} activated devnet, "
+          f"{len(data.get('newly_activated_testnet', []))} activated testnet")
 
     plain = build_plain_message(data)
     print("\n--- Notification Preview ---")

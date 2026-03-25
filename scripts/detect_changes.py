@@ -1,8 +1,8 @@
 """
 Compare the previous and current feature_gates.json to detect:
 1. Newly added features (keys that didn't exist before)
-2. Features pending mainnet activation (active on devnet + testnet, not yet on mainnet)
-3. Features that were just activated on mainnet (got mainnet_activation_epoch since last run)
+2. Features pending activation on any cluster (account exists but not yet activated)
+3. Features that were just activated on any cluster (got activation_epoch since last run)
 
 Outputs data/notifications.json with structured messages for notify.py.
 
@@ -52,8 +52,8 @@ def find_new_features(previous: list[dict], current: list[dict]) -> list[dict]:
     return [f for f in current if f.get('key') and f['key'] not in prev_keys]
 
 
-def find_newly_activated(previous: list[dict], current: list[dict]) -> list[dict]:
-    """Features that just got a mainnet_activation_epoch (had None before, has value now)."""
+def find_newly_activated(previous: list[dict], current: list[dict], epoch_field: str = 'mainnet_activation_epoch') -> list[dict]:
+    """Features that just got an activation epoch (had None before, has value now)."""
     prev_by_key = {f['key']: f for f in previous if f.get('key')}
     result = []
     for feat in current:
@@ -61,7 +61,7 @@ def find_newly_activated(previous: list[dict], current: list[dict]) -> list[dict
         if not key:
             continue
         prev = prev_by_key.get(key)
-        if prev and not prev.get('mainnet_activation_epoch') and feat.get('mainnet_activation_epoch'):
+        if prev and not prev.get(epoch_field) and feat.get(epoch_field):
             result.append(feat)
     return result
 
@@ -122,8 +122,8 @@ RATE_LIMIT_DELAY = 0.5
 MAX_RETRIES = 3
 
 
-async def check_mainnet_account_exists(connection: AsyncClient, key: str) -> bool:
-    """Check if a feature account has been created on mainnet (submitted for activation)."""
+async def check_account_exists(connection: AsyncClient, key: str) -> bool:
+    """Check if a feature account has been created on a cluster."""
     for attempt in range(MAX_RETRIES):
         try:
             await asyncio.sleep(RATE_LIMIT_DELAY)
@@ -140,37 +140,43 @@ async def check_mainnet_account_exists(connection: AsyncClient, key: str) -> boo
     return False
 
 
-async def find_pending_mainnet(features: list[dict]) -> list[dict]:
+async def find_pending_cluster(
+    features: list[dict],
+    rpc_url: str,
+    cluster_name: str,
+    activation_field: str,
+    prerequisite_fields: list[str] | None = None,
+) -> list[dict]:
     """
-    Features that are active on devnet + testnet but not yet on mainnet,
-    AND whose feature account has been created on mainnet (meaning Anza devops
-    has submitted the activation). Features whose account doesn't exist on
-    mainnet yet are not included -- they haven't entered the activation pipeline.
-    Sorted by testnet activation epoch (earliest first = likely activated sooner).
+    Find features pending activation on a cluster: not yet activated there,
+    but the feature account exists (submitted for activation).
+    prerequisite_fields: optional list of epoch fields that must already be set
+    (e.g. devnet+testnet must be active before mainnet).
     """
+    prereqs = prerequisite_fields or []
     candidates = [
         f for f in features
-        if f.get('devnet_activation_epoch')
-        and f.get('testnet_activation_epoch')
-        and not f.get('mainnet_activation_epoch')
+        if not f.get(activation_field)
+        and all(f.get(p) for p in prereqs)
     ]
-    candidates.sort(key=lambda f: f.get('testnet_activation_epoch', 0))
+    candidates.sort(key=lambda f: f.get('testnet_activation_epoch') or 0)
 
     if not candidates:
         return []
 
-    async with AsyncClient(MAINNET_RPC_URL) as connection:
+    print(f"Checking which features have accounts on {cluster_name}...")
+    async with AsyncClient(rpc_url) as connection:
         pending = []
         for feat in candidates:
             key = feat.get('key')
             if not key:
                 continue
-            exists = await check_mainnet_account_exists(connection, key)
+            exists = await check_account_exists(connection, key)
             if exists:
-                print(f"  {key}: account exists on mainnet (pending activation)")
+                print(f"  {key}: account exists on {cluster_name} (pending activation)")
                 pending.append(feat)
             else:
-                print(f"  {key}: account not yet created on mainnet, skipping")
+                print(f"  {key}: account not yet created on {cluster_name}, skipping")
         return pending
 
 
@@ -202,9 +208,25 @@ async def main():
     current = load_current_features()
 
     new_features = find_new_features(previous, current)
-    newly_activated = find_newly_activated(previous, current)
-    print("Checking which pending features have accounts on mainnet...")
-    pending_mainnet = await find_pending_mainnet(current)
+    newly_activated = find_newly_activated(previous, current, 'mainnet_activation_epoch')
+    newly_activated_devnet = find_newly_activated(previous, current, 'devnet_activation_epoch')
+    newly_activated_testnet = find_newly_activated(previous, current, 'testnet_activation_epoch')
+
+    pending_mainnet = await find_pending_cluster(
+        current, MAINNET_RPC_URL, "mainnet",
+        'mainnet_activation_epoch',
+        prerequisite_fields=['devnet_activation_epoch', 'testnet_activation_epoch'],
+    )
+    pending_devnet = await find_pending_cluster(
+        current, DEVNET_RPC_URL, "devnet",
+        'devnet_activation_epoch',
+        prerequisite_fields=['testnet_activation_epoch'],
+    )
+    pending_testnet = await find_pending_cluster(
+        current, TESTNET_RPC_URL, "testnet",
+        'testnet_activation_epoch',
+    )
+
     cluster_info = await get_all_cluster_info()
 
     notifications = {
@@ -212,13 +234,23 @@ async def main():
         **cluster_info,
         'new_features': [format_feature_summary(f) for f in new_features],
         'pending_mainnet': [format_feature_summary(f) for f in pending_mainnet],
+        'pending_devnet': [format_feature_summary(f) for f in pending_devnet],
+        'pending_testnet': [format_feature_summary(f) for f in pending_testnet],
         'newly_activated': [format_feature_summary(f) for f in newly_activated],
+        'newly_activated_devnet': [format_feature_summary(f) for f in newly_activated_devnet],
+        'newly_activated_testnet': [format_feature_summary(f) for f in newly_activated_testnet],
     }
 
-    total = len(new_features) + len(pending_mainnet) + len(newly_activated)
-    print(f"Detected {len(new_features)} new features, "
+    total = (len(new_features)
+             + len(pending_mainnet) + len(pending_devnet) + len(pending_testnet)
+             + len(newly_activated) + len(newly_activated_devnet) + len(newly_activated_testnet))
+    print(f"Detected {len(new_features)} new, "
           f"{len(pending_mainnet)} pending mainnet, "
-          f"{len(newly_activated)} newly activated")
+          f"{len(pending_devnet)} pending devnet, "
+          f"{len(pending_testnet)} pending testnet, "
+          f"{len(newly_activated)} activated mainnet, "
+          f"{len(newly_activated_devnet)} activated devnet, "
+          f"{len(newly_activated_testnet)} activated testnet")
 
     with open(NOTIFICATIONS_PATH, 'w') as f:
         json.dump(notifications, f, indent=2)
