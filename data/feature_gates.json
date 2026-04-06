@@ -1792,5 +1792,33 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": ""
+  },
+  {
+    "key": "5cC3foj77CWun58pC51ebHFUWavHWKarWyR5UUik7dnC",
+    "title": "SIMD-0178/0189/0377: Enables deployment and execution of SBPFv3 programs",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0178-static-syscalls.md",
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0189-sbpf-stricter-elf-headers.md",
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0377-ebpf-isa-compatibility.md"
+    ],
+    "simds": [
+      "0178",
+      " 0189",
+      " 0377"
+    ],
+    "owners": [],
+    "min_agave_versions": [
+      "v4.0.0"
+    ],
+    "min_fd_versions": [
+      "0.1"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": ""
   }
 ]
