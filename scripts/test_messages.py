@@ -227,25 +227,25 @@ def print_scenario(name, data):
             block = _slack_feature_block(feat, data, show_status=True, countdowns=countdowns)
             print(block['text']['text'])
             print()
-    for pending_key in ['pending_mainnet', 'pending_devnet', 'pending_testnet']:
+    for pending_key, cluster_key in [('pending_mainnet', 'mainnet'), ('pending_devnet', 'devnet'), ('pending_testnet', 'testnet')]:
         if data.get(pending_key):
             for feat in data[pending_key]:
-                block = _slack_feature_block(feat, data, countdowns=countdowns)
+                block = _slack_feature_block(feat, data, countdowns=countdowns, cluster=cluster_key)
                 print(block['text']['text'])
                 print()
     if data.get('newly_activated'):
         for feat in data['newly_activated']:
-            block = _slack_feature_block(feat, data)
+            block = _slack_feature_block(feat, data, cluster='mainnet')
             print(block['text']['text'])
             print()
     if data.get('newly_activated_devnet'):
         for feat in data['newly_activated_devnet']:
-            block = _slack_feature_block(feat, data, countdowns=countdowns)
+            block = _slack_feature_block(feat, data, countdowns=countdowns, cluster='devnet')
             print(block['text']['text'])
             print()
     if data.get('newly_activated_testnet'):
         for feat in data['newly_activated_testnet']:
-            block = _slack_feature_block(feat, data, countdowns=countdowns)
+            block = _slack_feature_block(feat, data, countdowns=countdowns, cluster='testnet')
             print(block['text']['text'])
             print()
 
