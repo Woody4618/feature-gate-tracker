@@ -1932,7 +1932,7 @@
     "min_jito_versions": [],
     "planned_testnet_order": null,
     "testnet_activation_epoch": 977,
-    "devnet_activation_epoch": null,
+    "devnet_activation_epoch": 1092,
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": ""
