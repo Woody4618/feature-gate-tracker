@@ -211,7 +211,7 @@ def format_feature_summary(feat: dict) -> dict:
     simd_links = feat.get('simd_link', [])
     title = feat.get('title') or feat.get('description') or 'Untitled'
 
-    title = re.sub(r'^SIMD-\d+:\s*', '', title)
+    title = re.sub(r'^\s*SIMDs?[-\s]\d{2,4}(?:\s*/\s*\d{2,4})*(?:-\d+)?:\s*', '', title)
 
     return {
         'key': key,
