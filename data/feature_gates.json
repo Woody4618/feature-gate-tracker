@@ -675,17 +675,13 @@
     "simd_link": [
       ""
     ],
-    "simds": [
-      ""
-    ],
+    "simds": [],
     "owners": [],
     "min_agave_versions": [
       "v1.18.13"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": null,
     "testnet_activation_epoch": 669,
     "devnet_activation_epoch": 502,
@@ -709,9 +705,7 @@
       "v1.18.13"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": null,
     "testnet_activation_epoch": 670,
     "devnet_activation_epoch": 726,
@@ -725,17 +719,13 @@
     "simd_link": [
       ""
     ],
-    "simds": [
-      ""
-    ],
+    "simds": [],
     "owners": [],
     "min_agave_versions": [
       "v1.18.7"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 100,
     "testnet_activation_epoch": 671,
     "devnet_activation_epoch": 730,
@@ -749,17 +739,13 @@
     "simd_link": [
       ""
     ],
-    "simds": [
-      ""
-    ],
+    "simds": [],
     "owners": [],
     "min_agave_versions": [
       "v1.18.1"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 300,
     "testnet_activation_epoch": 673,
     "devnet_activation_epoch": 733,
@@ -773,17 +759,13 @@
     "simd_link": [
       ""
     ],
-    "simds": [
-      ""
-    ],
+    "simds": [],
     "owners": [],
     "min_agave_versions": [
       "v1.18.2"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 350,
     "testnet_activation_epoch": 674,
     "devnet_activation_epoch": 734,
@@ -797,17 +779,13 @@
     "simd_link": [
       ""
     ],
-    "simds": [
-      ""
-    ],
+    "simds": [],
     "owners": [],
     "min_agave_versions": [
       "v1.18.8"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 400,
     "testnet_activation_epoch": 675,
     "devnet_activation_epoch": 735,
@@ -829,9 +807,7 @@
       "v1.18.0"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 600,
     "testnet_activation_epoch": 676,
     "devnet_activation_epoch": 737,
@@ -853,9 +829,7 @@
       "v2.0.9"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 725,
     "testnet_activation_epoch": 706,
     "devnet_activation_epoch": 790,
@@ -877,9 +851,7 @@
       "v2.0.0"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 1100,
     "testnet_activation_epoch": 709,
     "devnet_activation_epoch": 793,
@@ -893,17 +865,13 @@
     "simd_link": [
       ""
     ],
-    "simds": [
-      ""
-    ],
+    "simds": [],
     "owners": [],
     "min_agave_versions": [
       "1.18"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 1105,
     "testnet_activation_epoch": 710,
     "devnet_activation_epoch": 794,
@@ -927,9 +895,7 @@
       "v2.1.10"
     ],
     "min_fd_versions": [],
-    "min_jito_versions": [
-      ""
-    ],
+    "min_jito_versions": [],
     "planned_testnet_order": 5200,
     "testnet_activation_epoch": 814,
     "devnet_activation_epoch": 918,
@@ -1034,7 +1000,7 @@
     ],
     "simds": [
       "0173",
-      " 0174"
+      "0174"
     ],
     "owners": [],
     "min_agave_versions": [
@@ -1803,8 +1769,8 @@
     ],
     "simds": [
       "0178",
-      " 0189",
-      " 0377"
+      "0189",
+      "0377"
     ],
     "owners": [],
     "min_agave_versions": [
@@ -2078,7 +2044,7 @@
     "testnet_activation_epoch": 1000,
     "devnet_activation_epoch": 1115,
     "comms_required": null,
-    "mainnet_activation_epoch": null,
+    "mainnet_activation_epoch": 1019,
     "description": ""
   },
   {
@@ -2152,5 +2118,161 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": ""
+  },
+  {
+    "key": "BY4JhHLahVzS9ynfDz4exzGPbVXhFmJvEyMWsXbDBqME",
+    "title": "SIMD-0392: Relaxation of post-execution min_balance check",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0392-rent-increase-adaptations.md"
+    ],
+    "simds": [
+      "0392"
+    ],
+    "owners": [
+      "igor56D"
+    ],
+    "min_agave_versions": [
+      "v4.2.0"
+    ],
+    "min_fd_versions": [
+      "v26.08.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "4a6f7o7iTcA8hRDCrPLkSatnt5Ykxiu36wo5p1Tt12wC",
+    "title": "SIMD-0437-1: Set lamports per byte to 6333",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0437-incremental-rent-reduction.md"
+    ],
+    "simds": [
+      "0437"
+    ],
+    "owners": [
+      "igor56D"
+    ],
+    "min_agave_versions": [
+      "v4.2.0-beta.1"
+    ],
+    "min_fd_versions": [
+      "v26.08.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "txv1aq4pp281K9um3tnPgkfX8UqtFT6wcVW3hNezGLL",
+    "title": "SIMD-0385: Transaction V1",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0385-transaction-v1.md"
+    ],
+    "simds": [
+      "0385"
+    ],
+    "owners": [
+      "apfitzge"
+    ],
+    "min_agave_versions": [
+      "v4.2.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.08.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "s51VGwCAgebo2745DSUris72RavoLkXGUmVJosESCXr",
+    "title": "SIMD-0391: Upgrade BPF Stake Program to v5.1.0 (fixed-point warmup/cooldown)",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0391-replace-stake-program-floating-point.md"
+    ],
+    "simds": [
+      "0391"
+    ],
+    "owners": [
+      "grod220"
+    ],
+    "min_agave_versions": [
+      "v4.2.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.08.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "3HcSrCTGXTUnrTueHi4DAwNuMxZSsm5xui2Ax3mgxHqf",
+    "title": "SIMD-0232: Custom Commission Collector",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0232-custom-commission-collector.md"
+    ],
+    "simds": [
+      "0232"
+    ],
+    "owners": [
+      "joncinque"
+    ],
+    "min_agave_versions": [
+      "v4.2.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.08.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "61BtM7BkDEE8Yq5fskEVAQT9mYA8qCejJWoLe5apqg81",
+    "title": "SIMD-0437-2: Set lamports per byte to 5080",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0437-incremental-rent-reduction.md"
+    ],
+    "simds": [
+      "0437"
+    ],
+    "owners": [
+      "igor56D"
+    ],
+    "min_agave_versions": [
+      "v4.2.0-beta.1"
+    ],
+    "min_fd_versions": [
+      "v26.08.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
