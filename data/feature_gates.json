@@ -2142,7 +2142,7 @@
     "testnet_activation_epoch": 1018,
     "devnet_activation_epoch": 1132,
     "comms_required": null,
-    "mainnet_activation_epoch": null,
+    "mainnet_activation_epoch": 1027,
     "description": null
   },
   {
@@ -2191,7 +2191,7 @@
     ],
     "min_jito_versions": [],
     "planned_testnet_order": null,
-    "testnet_activation_epoch": null,
+    "testnet_activation_epoch": 1025,
     "devnet_activation_epoch": null,
     "comms_required": null,
     "mainnet_activation_epoch": null,
