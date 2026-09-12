@@ -2272,7 +2272,7 @@
     "testnet_activation_epoch": 1026,
     "devnet_activation_epoch": 1141,
     "comms_required": null,
-    "mainnet_activation_epoch": null,
+    "mainnet_activation_epoch": 1033,
     "description": null
   }
 ]
