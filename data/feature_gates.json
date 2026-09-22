@@ -2274,5 +2274,29 @@
     "comms_required": null,
     "mainnet_activation_epoch": 1033,
     "description": null
+  },
+  {
+    "key": "A1pengvuM6JEcyNuTnMqepBKhwHE3N6PmUrdATGawhJS",
+    "title": "SIMD-0326: Alpenglow: new consensus algorithm",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0326-alpenglow.md"
+    ],
+    "simds": [
+      "0326"
+    ],
+    "owners": [
+      "AshwinSekar"
+    ],
+    "min_agave_versions": [
+      "v4.3.0"
+    ],
+    "min_fd_versions": [],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
