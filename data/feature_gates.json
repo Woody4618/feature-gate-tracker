@@ -2298,5 +2298,83 @@
     "comms_required": null,
     "mainnet_activation_epoch": 1064,
     "description": null
+  },
+  {
+    "key": "RMsTKfD6hZnBhhNvgGBeKNrqCNkeoP3DYYxNtcuWtRg",
+    "title": "SIMD-0599: Remove inactive stakes from stake delegations",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0599-rm-inactive-stakes-from-per.md"
+    ],
+    "simds": [
+      "0599"
+    ],
+    "owners": [
+      "2501babe"
+    ],
+    "min_agave_versions": [
+      "v4.4.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.10.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "turbzzBJLGMJJikLvgCCJu9e1hTmfxwarrbLndYAsK5",
+    "title": "SIMD-0317: Enforce the Merkle proof size of a fixed 32:32 FEC set",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0317-enforce-32-data-shreds.md"
+    ],
+    "simds": [
+      "0317"
+    ],
+    "owners": [
+      "alexpyattaev"
+    ],
+    "min_agave_versions": [
+      "v4.4.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.10.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "EhisBfVtGvEA8bVCVN5VMaYEaX6iTfoUrmcDi8LY7Kxy",
+    "title": "SIMD-0433: Loader V3 Set Program Data to ELF Length",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0433-loader-v3-set-program-data-to-elf-length.md"
+    ],
+    "simds": [
+      "0433"
+    ],
+    "owners": [
+      "buffalojoec"
+    ],
+    "min_agave_versions": [
+      "v4.4.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.10.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
