@@ -2376,5 +2376,31 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": null
+  },
+  {
+    "key": "rntCigrTppP5JdZz7K8TyN9sMzLdAcXp8SejYpVpX6D",
+    "title": "SIMD-0437-3: Set lamports per byte to 2575",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0437-incremental-rent-reduction.md"
+    ],
+    "simds": [
+      "0437"
+    ],
+    "owners": [
+      "brooksprumo"
+    ],
+    "min_agave_versions": [
+      "v4.3.0-rc.1"
+    ],
+    "min_fd_versions": [
+      "v26.10.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
