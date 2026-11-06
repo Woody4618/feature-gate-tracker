@@ -2420,9 +2420,9 @@
     "min_jito_versions": [],
     "planned_testnet_order": null,
     "testnet_activation_epoch": null,
-    "devnet_activation_epoch": null,
+    "devnet_activation_epoch": 1202,
     "comms_required": null,
-    "mainnet_activation_epoch": null,
+    "mainnet_activation_epoch": 1079,
     "description": null
   }
 ]
