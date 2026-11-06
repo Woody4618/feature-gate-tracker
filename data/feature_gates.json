@@ -2402,5 +2402,27 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": null
+  },
+  {
+    "key": "8whkDenELnfwYLirBc4Wb4H2Z1z5K7tiykpdxJS7cWg1",
+    "title": "Apply a minimum loaded data size to loader-v3 ProgramData accounts",
+    "simd_link": [],
+    "simds": [],
+    "owners": [
+      "apfitzge"
+    ],
+    "min_agave_versions": [
+      "v4.4.1"
+    ],
+    "min_fd_versions": [
+      "26.10.6"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
