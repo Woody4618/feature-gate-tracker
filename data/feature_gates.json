@@ -2345,7 +2345,7 @@
     ],
     "min_jito_versions": [],
     "planned_testnet_order": null,
-    "testnet_activation_epoch": null,
+    "testnet_activation_epoch": 1092,
     "devnet_activation_epoch": null,
     "comms_required": null,
     "mainnet_activation_epoch": null,
@@ -2439,6 +2439,32 @@
     ],
     "min_agave_versions": [
       "v4.3.0-rc.1"
+    ],
+    "min_fd_versions": [
+      "v26.10.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "FEEXbxUuKobtrt1qNK5pjtzbPQhsppBTrNNG74xu4mai",
+    "title": "SIMD-0290: Relax block constraint requiring valid fee-payer",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0290-relax-fee-payer-constraint.md"
+    ],
+    "simds": [
+      "0290"
+    ],
+    "owners": [
+      "2501babe"
+    ],
+    "min_agave_versions": [
+      "v4.5.0-beta.0"
     ],
     "min_fd_versions": [
       "v26.10.0"
