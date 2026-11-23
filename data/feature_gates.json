@@ -2476,5 +2476,83 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": null
+  },
+  {
+    "key": "SeRjtX7Abiq5hQYbzdCny266oveDseHZh9tnrs2cdVC",
+    "title": "SIMD-0565: Enable secp256r1 syscalls",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0565-secp256r1-syscalls.md"
+    ],
+    "simds": [
+      "0565"
+    ],
+    "owners": [
+      "samkim-crypto"
+    ],
+    "min_agave_versions": [
+      "v4.5.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.11.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "FCsQnd4V52NESBhVURWYSWBbmLFzgxEZVC2WngzHzp1u",
+    "title": "SIMD-0690: Hash validation in Core BPF program migrations and upgrades",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0690-hash-validation-in-program-upgrades.md"
+    ],
+    "simds": [
+      "0690"
+    ],
+    "owners": [
+      "buffalojoec"
+    ],
+    "min_agave_versions": [
+      "v4.5.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.11.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
+  },
+  {
+    "key": "pata6uFabFDejC1U7rpmFj9s1FhmiPyWk6D51U1ksx3",
+    "title": "SIMD-0567: CU-optimized ATA program",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0567-cu-optimized-ata-program.md"
+    ],
+    "simds": [
+      "0567"
+    ],
+    "owners": [
+      "grod220"
+    ],
+    "min_agave_versions": [
+      "v4.5.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.11.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
