@@ -2554,5 +2554,31 @@
     "comms_required": null,
     "mainnet_activation_epoch": null,
     "description": null
+  },
+  {
+    "key": "expHkkpN92z71GU7EwB7AXCy8Mz4kzDJFpGY1dZV9A7",
+    "title": "SIMD-0529: big_integer mod_exp syscall",
+    "simd_link": [
+      "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0529-big-integer-modexp-syscall.md"
+    ],
+    "simds": [
+      "0529"
+    ],
+    "owners": [
+      "zz-sol"
+    ],
+    "min_agave_versions": [
+      "v4.5.0-beta.0"
+    ],
+    "min_fd_versions": [
+      "v26.11.0"
+    ],
+    "min_jito_versions": [],
+    "planned_testnet_order": null,
+    "testnet_activation_epoch": null,
+    "devnet_activation_epoch": null,
+    "comms_required": null,
+    "mainnet_activation_epoch": null,
+    "description": null
   }
 ]
